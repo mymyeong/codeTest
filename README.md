@@ -24,6 +24,7 @@
 ```json{
       	 "usePointAmount": {Long}
       }
+````
     - return : JSON  
 ```yaml{
         "userNo": {Long},

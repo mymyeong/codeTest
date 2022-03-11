@@ -26,9 +26,9 @@
 {
   "usePointAmount": {Long}
 } 
-````
+```
     
-    - return : JSON  
++ return : JSON  
     
 ```json 
 {
@@ -37,7 +37,7 @@
   "pointStatus": {String}"CHARGE(충전) or USE(사용)",
   "pointAmount": {Long}
 }
-````
+```
     
     
 + 회원별 포인트 사용

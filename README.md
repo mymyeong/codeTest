@@ -10,7 +10,7 @@
     - url : /user-point/{userNo}/list
     - parameter : 없음
     - return : JSON
-```{
+```json{
         "userNo": {Long},
         "processDate": {DATE},
         "pointStatus": "CHARGE(충전) or USE(사용)",

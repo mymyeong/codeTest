@@ -26,7 +26,8 @@
 ```json 
 {
   "usePointAmount": {Long}
-} ```
+} 
+```
     - return : JSON  
 ```json 
 {

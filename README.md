@@ -12,10 +12,10 @@
     - return : JSON
 ```json 
 {
-        "userNo": {Long},
-        "processDate": {Date},
-        "pointStatus": {String}"CHARGE(충전) or USE(사용)",
-        "pointAmount": {Long}
+  "userNo": {Long},
+  "processDate": {Date},
+  "pointStatus": {String}"CHARGE(충전) or USE(사용)",
+  "pointAmount": {Long}
 }
 ````
     
@@ -25,16 +25,18 @@
     - parameter : JSON 
 ```json 
 {
-     "usePointAmount": {Long}
+  "usePointAmount": {Long}
 }
 ````
+    
     - return : JSON  
-```json {
-        "userNo": {Long},
-        "processDate": {Date},
-        "pointStatus": {String}"CHARGE(충전) or USE(사용)",
-        "pointAmount": {Long}
-      }
+```json 
+{
+  "userNo": {Long},
+  "processDate": {Date},
+  "pointStatus": {String}"CHARGE(충전) or USE(사용)",
+  "pointAmount": {Long}
+}
 ````
     
     

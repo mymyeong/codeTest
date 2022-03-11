@@ -59,3 +59,4 @@
   "responseDateTime": Date, /** 응답일자 */
 }
 ```
+

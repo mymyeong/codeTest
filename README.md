@@ -27,8 +27,6 @@
 {
   "usePointAmount": {Long}
 }
-````
-    
     - return : JSON  
 ```json 
 {

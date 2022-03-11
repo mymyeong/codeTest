@@ -19,7 +19,6 @@
 }
 ````
     
-     
 + 회원별 포인트 적립
     - url : /user-point/{userNo}/usePoint
     - parameter : JSON 

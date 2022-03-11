@@ -10,28 +10,30 @@
     - url : /user-point/{userNo}/list
     - parameter : 없음
     - return : JSON
-```yaml{
+```{
         "userNo": {Long},
         "processDate": {DATE},
         "pointStatus": "CHARGE(충전) or USE(사용)",
         "pointAmount": {Long}
       }
+````
     
      
 + 회원별 포인트 적립
     - url : /user-point/{userNo}/usePoint
     - parameter : JSON 
-```json{
+```{
       	 "usePointAmount": {Long}
       }
 ````
     - return : JSON  
-```yaml{
+````{
         "userNo": {Long},
         "processDate": {DATE},
         "pointStatus": "CHARGE(충전) or USE(사용)",
         "pointAmount": {Long}
       }
+````
     
     
 + 회원별 포인트 사용

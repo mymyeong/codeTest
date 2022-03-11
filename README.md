@@ -28,7 +28,9 @@
   "usePointAmount": {Long}
 } 
 ```
+    
     - return : JSON  
+    
 ```json 
 {
   "userNo": {Long},

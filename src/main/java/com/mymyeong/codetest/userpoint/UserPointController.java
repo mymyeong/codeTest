@@ -49,7 +49,7 @@ public class UserPointController {
 	 * @return
 	 * @throws Exception
 	 */
-	@GetMapping("{userNo}/point")
+	@GetMapping("{userNo}/")
 	public Long getUserPoint(@PathVariable Long userNo) throws Exception {
 		log.info("사용자 포인트 조회 : USER_NO[{}] ", userNo);
 		return userPointRepository.getUserPoint(userNo);
@@ -63,7 +63,7 @@ public class UserPointController {
 	 * @return
 	 * @throws Exception
 	 */
-	@GetMapping("/{userNo}/pointList")
+	@GetMapping("/{userNo}/list")
 	public List<UserPoint> getUserPointList(@PathVariable Long userNo, @PageableDefault(size = 5) Pageable pageable) throws Exception {
 
 		log.info("사용자 포인트 적립/사용 내역 조회 : USER_NO[{}] ", userNo);
@@ -85,7 +85,7 @@ public class UserPointController {
 	 * @return
 	 * @throws Exception
 	 */
-	@GetMapping("/{userNo}/useablePointList")
+	@GetMapping("/{userNo}/useableList")
 	public List<UserPointDetailUseInterface> getUserUseablePointList(@PathVariable Long userNo, @PageableDefault(size = 5) Pageable pageable) throws Exception {
 
 		log.info("사용자 가용 포인트 상세 내역 조회 : USER_NO[{}] ", userNo);
@@ -119,64 +119,6 @@ public class UserPointController {
 		chargePoint(userNo, parseChargePointAmount);
 
 		return getSussceResultMsg();
-	}
-
-	/**
-	 * 포인트 충전
-	 * 
-	 * @param userNo
-	 * @param parseChargePointAmount
-	 */
-	@Transactional
-	protected void chargePoint(Long userNo, Long parseChargePointAmount) {
-		UserPoint userPoint = getUserPoint(userNo, parseChargePointAmount);
-		UserPoint saveUserPoint = userPointRepository.save(userPoint);
-		log.info("save UserPoint : {}", saveUserPoint);
-		Long userPointDetailSeq = userPointDetailRepository.getUserPointDetailSeq();
-		UserPointDetail userPointDetail = getUserPointDetail(userNo, userPointDetailSeq, parseChargePointAmount, saveUserPoint);
-		log.info("save userPointDetail : {}", userPointDetail);
-		userPointDetail = userPointDetailRepository.saveUserPointDetail(userPointDetail);
-	}
-
-	/**
-	 * 사용자 포인트 객채 생성
-	 * 
-	 * @param userNo
-	 * @param parseChargePointAmount
-	 * @return
-	 */
-	private UserPoint getUserPoint(Long userNo, Long parseChargePointAmount) {
-		UserPoint userPoint = new UserPoint();
-
-		userPoint.setPointAmount(parseChargePointAmount);
-		userPoint.setPointStatus(PointStatus.CHARGE);
-		userPoint.setProcessDate(LocalDateTime.now().withNano(0));
-		userPoint.setUserNo(userNo);
-
-		return userPoint;
-	}
-
-	/**
-	 * 사용자 상세 포인트 내역 객체 생성
-	 * 
-	 * @param userNo
-	 * @param parseChargePointAmount
-	 * @param parseChargePointAmount2 
-	 * @param saveUserPoint
-	 * @return
-	 */
-	private UserPointDetail getUserPointDetail(Long userNo, Long userPointDetailSeq, Long parseChargePointAmount, UserPoint saveUserPoint) {
-		UserPointDetail userPointDetail = new UserPointDetail();
-
-		userPointDetail.setNo(userPointDetailSeq);
-		userPointDetail.setPointDetailNo(userPointDetailSeq);
-		userPointDetail.setPointAmount(parseChargePointAmount);
-		userPointDetail.setPointStatus(PointStatus.CHARGE);
-		userPointDetail.setProcessDate(LocalDateTime.now().withNano(0));
-		userPointDetail.setUserNo(userNo);
-		userPointDetail.setUserPoint(saveUserPoint);
-
-		return userPointDetail;
 	}
 
 	/**
@@ -221,6 +163,70 @@ public class UserPointController {
 		saveUserPoint(userNo, paseLongUserPointAmount, nowDateTime, useList);
 
 		return getSussceResultMsg();
+	}
+
+	/**
+	 * 포인트 충전
+	 * 
+	 * @param userNo
+	 * @param parseChargePointAmount
+	 * @throws Exception
+	 */
+	@Transactional
+	protected void chargePoint(Long userNo, Long parseChargePointAmount) throws Exception {
+
+		UserPoint userPoint = getUserPoint(userNo, parseChargePointAmount);
+		UserPoint saveUserPoint = userPointRepository.save(userPoint);
+		log.info("save UserPoint : {}", saveUserPoint);
+		Long userPointDetailSeq = userPointDetailRepository.getUserPointDetailSeq();
+		UserPointDetail userPointDetail = getUserPointDetail(userNo, userPointDetailSeq, parseChargePointAmount, saveUserPoint);
+		log.info("save userPointDetail : {}", userPointDetail);
+		Integer saveUserPointDetail = userPointDetailRepository.saveUserPointDetail(userPointDetail);
+
+		if (saveUserPointDetail == null || saveUserPointDetail != 1) {
+			throw new Exception();
+		}
+	}
+
+	/**
+	 * 사용자 포인트 객채 생성
+	 * 
+	 * @param userNo
+	 * @param parseChargePointAmount
+	 * @return
+	 */
+	private UserPoint getUserPoint(Long userNo, Long parseChargePointAmount) {
+		UserPoint userPoint = new UserPoint();
+
+		userPoint.setPointAmount(parseChargePointAmount);
+		userPoint.setPointStatus(PointStatus.CHARGE);
+		userPoint.setProcessDate(LocalDateTime.now().withNano(0));
+		userPoint.setUserNo(userNo);
+
+		return userPoint;
+	}
+
+	/**
+	 * 사용자 상세 포인트 내역 객체 생성
+	 * 
+	 * @param userNo
+	 * @param parseChargePointAmount
+	 * @param parseChargePointAmount2
+	 * @param saveUserPoint
+	 * @return
+	 */
+	private UserPointDetail getUserPointDetail(Long userNo, Long userPointDetailSeq, Long parseChargePointAmount, UserPoint saveUserPoint) {
+		UserPointDetail userPointDetail = new UserPointDetail();
+
+		userPointDetail.setNo(userPointDetailSeq);
+		userPointDetail.setPointDetailNo(userPointDetailSeq);
+		userPointDetail.setPointAmount(parseChargePointAmount);
+		userPointDetail.setPointStatus(PointStatus.CHARGE);
+		userPointDetail.setProcessDate(LocalDateTime.now().withNano(0));
+		userPointDetail.setUserNo(userNo);
+		userPointDetail.setUserPoint(saveUserPoint);
+
+		return userPointDetail;
 	}
 
 	/**
@@ -374,6 +380,11 @@ public class UserPointController {
 		return temp;
 	}
 
+	/**
+	 * 성공 메시지 생성
+	 * 
+	 * @return
+	 */
 	private ResultMsg getSussceResultMsg() {
 		ResultMsg resultMsg = new ResultMsg("0", "성공", LocalDateTime.now());
 		return resultMsg;

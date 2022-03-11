@@ -3,6 +3,8 @@ package com.mymyeong.codetest.userpoint;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import javax.transaction.Transactional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,8 +21,13 @@ public interface UserPointDetailRepository extends JpaRepository<UserPointDetail
 	Long getUserPointDetailSeq();
 
 	@Modifying
-	@Query(value = "INSERT INTO User_Point_Detail (no) SELECT :#{#userPointDetail.no} ", nativeQuery = true)
-	UserPointDetail saveUserPointDetail(@Param(value = "userPointDetail") UserPointDetail userPointDetail);
+	@Transactional
+	@Query(value = "INSERT INTO User_Point_Detail " //
+			+ "(NO, POINT_AMOUNT, POINT_DETAIL_NO, POINT_STATUS, PROCESS_DATE, USER_NO, USER_POINT_NO) " //
+			+ "VALUES " //
+			+ "(:#{#userPointDetail.no}, :#{#userPointDetail.pointAmount}, :#{#userPointDetail.no}, :#{#userPointDetail.pointStatus.name}, :#{#userPointDetail.processDate}, :#{#userPointDetail.userNo}, :#{#userPointDetail.userPoint.no}) ", //
+			nativeQuery = true)
+	Integer saveUserPointDetail(@Param("userPointDetail") UserPointDetail userPointDetail);
 
 	/**
 	 * 사용자의 가용 포인트 상세 내역 조회

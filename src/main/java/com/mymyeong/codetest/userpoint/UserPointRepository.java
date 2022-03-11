@@ -1,8 +1,5 @@
 package com.mymyeong.codetest.userpoint;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,12 +29,12 @@ public interface UserPointRepository extends JpaRepository<UserPoint, Long> {
 	@Query(value = "SELECT p FROM UserPoint p WHERE p.userNo = :userNo order by p.processDate")
 	Page<UserPoint> findAllByUserNoOrderByProcessDate(@Param(value = "userNo") Long userNo, Pageable pageable);
 
-	@Query(value = "SELECT d.pointDetailNo as pointDetailNo, sum(d.pointAmount) as pointAmount, min(d.processDate) as processDate " //
-			+ "FROM UserPointDetail d "
-			+ "WHERE d.processDate >= :dateTime "
-			+ "AND d.userNo = :userNo "
-			+ "GROUP by d.pointDetailNo "
-			+ "HAVING sum(d.pointAmount) > 0")
-//	@Query(value = "SELECT d from UserPointDetail d WHERE d.userNo = :userNo and processDate >= :dateTime ")
-	Page<UserPointDetailUseInterface> getUserPointList(@Param(value = "userNo") Long userNo, LocalDateTime dateTime, Pageable pageable);
+//	@Modifying
+//	@Transactional
+//	@Query(value = "INSERT INTO UserPointDetail " //
+//			+ "(no, userNo, pointAmount, pointDetailNo, pointStatus, processDate, userPointNo) " //
+//			+ "VALUES " //
+//			+ "(USER_POINT_DETAIL_SEQ_GENERATOR.nextVal, :#{#userPointDetail.userNo}, :#{#userPointDetail.pointAmount}, :#{#userPointDetail.pointDetailNo}, "
+//			+ ":#{#userPointDetail.pointStatus}, :#{#userPointDetail.processDate}, :#{#userPointDetail.userPointNo})", nativeQuery = true)
+//	UserPointDetail saveUserPointDetail(@Param(value = "userPointDetail") UserPointDetail userPointDetail);
 }

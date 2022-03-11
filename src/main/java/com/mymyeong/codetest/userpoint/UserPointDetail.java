@@ -37,7 +37,7 @@ public class UserPointDetail {
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "USER_POINT_DETAIL_SEQ_GENERATOR")
 	@JsonIgnore
 	private Long no;
-	
+
 	/** 사용자 NO */
 	private Long userNo;
 
@@ -54,7 +54,7 @@ public class UserPointDetail {
 	private PointStatus pointStatus;
 
 	/** 충전/사용 포인트 */
-	private Integer pointAmount;
+	private Long pointAmount;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JsonIgnore

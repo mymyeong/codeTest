@@ -29,12 +29,4 @@ public interface UserPointRepository extends JpaRepository<UserPoint, Long> {
 	@Query(value = "SELECT p FROM UserPoint p WHERE p.userNo = :userNo order by p.processDate")
 	Page<UserPoint> findAllByUserNoOrderByProcessDate(@Param(value = "userNo") Long userNo, Pageable pageable);
 
-//	@Modifying
-//	@Transactional
-//	@Query(value = "INSERT INTO UserPointDetail " //
-//			+ "(no, userNo, pointAmount, pointDetailNo, pointStatus, processDate, userPointNo) " //
-//			+ "VALUES " //
-//			+ "(USER_POINT_DETAIL_SEQ_GENERATOR.nextVal, :#{#userPointDetail.userNo}, :#{#userPointDetail.pointAmount}, :#{#userPointDetail.pointDetailNo}, "
-//			+ ":#{#userPointDetail.pointStatus}, :#{#userPointDetail.processDate}, :#{#userPointDetail.userPointNo})", nativeQuery = true)
-//	UserPointDetail saveUserPointDetail(@Param(value = "userPointDetail") UserPointDetail userPointDetail);
 }

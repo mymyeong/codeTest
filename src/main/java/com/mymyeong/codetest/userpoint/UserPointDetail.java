@@ -33,31 +33,31 @@ import lombok.ToString;
 @ToString
 public class UserPointDetail {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "USER_POINT_DETAIL_SEQ_GENERATOR")
-	@JsonIgnore
-	private Long no;
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "USER_POINT_DETAIL_SEQ_GENERATOR")
+    @JsonIgnore
+    private Long no;
 
-	/** 사용자 NO */
-	private Long userNo;
+    /** 사용자 NO */
+    private Long userNo;
 
-	/** 상세 적립 NO */
-	@JsonIgnore
-	private Long pointDetailNo;
+    /** 상세 적립 NO */
+    @JsonIgnore
+    private Long pointDetailNo;
 
-	/** 처리 일자 */
-	@Column
-	private LocalDateTime processDate;
+    /** 처리 일자 */
+    @Column
+    private LocalDateTime processDate;
 
-	/** 포인트 적립/사용 status */
-	@Enumerated(EnumType.STRING)
-	private PointStatus pointStatus;
+    /** 포인트 적립/사용 status */
+    @Enumerated(EnumType.STRING)
+    private PointStatus pointStatus;
 
-	/** 충전/사용 포인트 */
-	private Long pointAmount;
+    /** 충전/사용 포인트 */
+    private Long pointAmount;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JsonIgnore
-	private UserPoint userPoint;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
+    private UserPoint userPoint;
 
 }

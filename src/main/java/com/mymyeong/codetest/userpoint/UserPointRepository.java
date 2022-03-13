@@ -1,5 +1,8 @@
 package com.mymyeong.codetest.userpoint;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,4 +32,6 @@ public interface UserPointRepository extends JpaRepository<UserPoint, Long> {
 	@Query(value = "SELECT p FROM UserPoint p WHERE p.userNo = :userNo order by p.processDate")
 	Page<UserPoint> findAllByUserNoOrderByProcessDate(@Param(value = "userNo") Long userNo, Pageable pageable);
 
+	@Query(value = "SELECT p FROM UserPoint p WHERE p.userNo = :userNo AND p.processDate <= :date")
+	List<UserPoint> findExpiredUserPointList(@Param(value = "userNo") Long userNo, LocalDateTime date);
 }

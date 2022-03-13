@@ -12,6 +12,9 @@ public enum PointStatus {
 	CHARGE,
 
 	/** 사용 */
-	USE
+	USE,
+
+	/** 만료 */
+	EXPIRED
 
 }

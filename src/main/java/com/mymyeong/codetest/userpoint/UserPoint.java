@@ -35,7 +35,6 @@ public class UserPoint {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "USER_POINT_SEQ_GENERATOR")
-	@JsonIgnore
 	private Long no;
 
 	/** 사용자 NO */

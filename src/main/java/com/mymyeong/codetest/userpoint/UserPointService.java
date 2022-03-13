@@ -3,20 +3,14 @@ package com.mymyeong.codetest.userpoint;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,6 +31,7 @@ public class UserPointService {
 	 * @return
 	 */
 	public Long getUserPoint(Long userNo) {
+		// 포인트 조회
 		return userPointRepository.getUserPoint(userNo);
 	}
 
@@ -50,7 +45,7 @@ public class UserPointService {
 	public List<UserPoint> getUserPointList(Long userNo, Pageable pageable) {
 		Page<UserPoint> userPointList = userPointRepository.findAllByUserNoOrderByProcessDate(userNo, pageable);
 
-		if (userPointList == null || userPointList.getSize() < 1) {
+		if (userPointList == null) {
 			return new ArrayList<>();
 		}
 
@@ -71,7 +66,7 @@ public class UserPointService {
 	 * @throws Exception
 	 */
 	@Transactional
-	protected void chargePoint(Long userNo, Long parseChargePointAmount) throws Exception {
+	public void chargePoint(Long userNo, Long parseChargePointAmount) throws Exception {
 
 		UserPoint userPoint = getUserPoint(userNo, parseChargePointAmount);
 		UserPoint saveUserPoint = userPointRepository.save(userPoint);
@@ -86,7 +81,14 @@ public class UserPointService {
 		}
 	}
 
-	protected void usePoint(Long userNo, Long paseLongUserPointAmount) throws Exception {
+	/**
+	 * 포인트 사용
+	 * 
+	 * @param userNo
+	 * @param paseLongUserPointAmount
+	 * @throws Exception
+	 */
+	public void usePoint(Long userNo, Long paseLongUserPointAmount) throws Exception {
 		LocalDateTime nowDateTime = LocalDateTime.now();
 
 		// 포인트 한도 확인
@@ -130,8 +132,8 @@ public class UserPointService {
 	 * 사용자 상세 포인트 내역 객체 생성
 	 * 
 	 * @param userNo
+	 * @param userPointDetailSeq
 	 * @param parseChargePointAmount
-	 * @param parseChargePointAmount2
 	 * @param saveUserPoint
 	 * @return
 	 */
@@ -298,6 +300,51 @@ public class UserPointService {
 		temp.setProcessDate(userUseablePoint.getProcessDate());
 
 		return temp;
+	}
+
+	/**
+	 * 사용자 사용 포인트 내역 취소
+	 * 
+	 * @param userPoint
+	 */
+	public void usePointCancel(UserPoint userPoint) {
+
+		// userPoint select
+		userPoint = userPointRepository.getById(userPoint.getNo());
+
+		// userPointDetail Table 취소 처리
+		userPointDetailRepository.deleteAll(userPoint.getUserPointsDetail());
+
+		// userPoint Table 취소 처리
+		userPointRepository.delete(userPoint);
+	}
+
+	/**
+	 * 사용자 포인트 만료
+	 * 
+	 * @param userNo
+	 */
+	public void userPointExpired(Long userNo) {
+		LocalDateTime expiredDate = LocalDateTime.now().minusDays(365);
+
+		List<UserPoint> findAllExpiredUserPoint = userPointRepository.findExpiredUserPointList(userNo, expiredDate);
+
+		log.info("사용자NO {} : 포인트 만료 처리", userNo);
+		findAllExpiredUserPoint.forEach(v -> {
+			if (v != null) {
+				log.info(v.toString());
+			}
+		});
+
+		findAllExpiredUserPoint.forEach(v -> {
+			UserPoint expiredUserPoint = new UserPoint(0L, v.getUserNo(), LocalDateTime.now().withNano(0), PointStatus.EXPIRED, -v.getPointAmount(), new ArrayList<>());
+			userPointRepository.save(expiredUserPoint);
+			Long userPointDetailSeq = userPointDetailRepository.getUserPointDetailSeq();
+			UserPointDetail userPointDetail = getUserPointDetail(v.getUserNo(), userPointDetailSeq, -v.getPointAmount(), v);
+			userPointDetail.setPointStatus(PointStatus.EXPIRED);
+			userPointDetailRepository.save(userPointDetail);
+		});
+
 	}
 
 }

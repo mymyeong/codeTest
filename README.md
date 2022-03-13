@@ -79,7 +79,18 @@
   "responseDateTime": Date, /** 응답일자 */
 }
 ```
-    
++ 포인트 만료 처리
+    - url : /user-point/{userNo}/pointExpired
+    - parameter : 없음
+    - return : JSON
+```jsonc
+/**return */
+{
+  "resultCode": int, /** 응답코드 */
+  "resultMsg": String, /** 응답메시지 */
+  "responseDateTime": Date, /** 응답일자 */
+}
+```
     
 ---
 + 포인트 사용 우선순위 구현
@@ -107,4 +118,3 @@
     }
 ]
 ```
-

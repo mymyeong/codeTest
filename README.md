@@ -1,5 +1,8 @@
 # 사용자 포인트 적립 / 사용 시스템
 
+실행 명령어 : java -jar codeTest-0.0.1-SNAPSHOT.jar    
+기본 사용자 NO : 1
+
 + 회원별 포인트 합계 조회  
     - url : /user-point/{userNo}
     - parameter : 없음

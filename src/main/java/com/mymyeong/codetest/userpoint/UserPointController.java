@@ -1,12 +1,12 @@
 package com.mymyeong.codetest.userpoint;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 
 import javax.validation.Valid;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -34,32 +34,26 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class UserPointController {
 
-	@Autowired
-	UserPointService userPointService;
+	final UserPointService userPointService;
+
+	public UserPointController(UserPointService userPointService) {
+		this.userPointService = userPointService;
+	}
 
 	/**
 	 * 사용자 포인트 조회
-	 * 
-	 * @param userNo
-	 * @return
-	 * @throws Exception
 	 */
 	@GetMapping("/{userNo}")
-	public Long getPoint(@PathVariable Long userNo) throws Exception {
+	public BigDecimal getPoint(@PathVariable Long userNo) {
 		log.info("사용자 포인트 조회 : USER_NO[{}] ", userNo);
 		return userPointService.getUserPoint(userNo);
 	}
 
 	/**
 	 * 사용자 포인트 적립/사용 내역 조회
-	 * 
-	 * @param userNo
-	 * @param pageable
-	 * @return
-	 * @throws Exception
 	 */
 	@GetMapping("/{userNo}/list")
-	public List<UserPoint> getPointList(@PathVariable Long userNo, @PageableDefault(size = 5) Pageable pageable) throws Exception {
+	public List<UserPoint> getPointList(@PathVariable Long userNo, @PageableDefault(size = 5) Pageable pageable) {
 
 		log.info("사용자 포인트 적립/사용 내역 조회 : USER_NO[{}] ", userNo);
 
@@ -68,27 +62,17 @@ public class UserPointController {
 
 	/**
 	 * 사용자 가용 포인트 상세 내역 조회
-	 * 
-	 * @param userNo
-	 * @param pageable
-	 * @return
-	 * @throws Exception
 	 */
-	@GetMapping("/{userNo}/useableList")
-	public List<UserPointDetailUseInterface> getUseablePointList(@PathVariable Long userNo, @PageableDefault(size = 5) Pageable pageable) throws Exception {
+	@GetMapping("/{userNo}/usableList")
+	public List<UserPointDetailUseInterface> getUsablePointList(@PathVariable Long userNo, @PageableDefault(size = 5) Pageable pageable) {
 
 		log.info("사용자 가용 포인트 상세 내역 조회 : USER_NO[{}] ", userNo);
 
-		return userPointService.getUseablePointList(userNo, pageable);
+		return userPointService.getUsablePointList(userNo, pageable);
 	}
 
 	/**
 	 * 사용자 포인트 충전
-	 * 
-	 * @param userNo
-	 * @param map    chargePointAmount : 충전 포인트 금액
-	 * @return
-	 * @throws Exception
 	 */
 	@PostMapping("/{userNo}/chargePoint")
 	public ResponseEntity<ResultMsg> chargePoint(@PathVariable Long userNo, @Valid @RequestBody HashMap<String, String> map) throws Exception {
@@ -101,20 +85,15 @@ public class UserPointController {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "충전 포인트를 입력해 주세요");
 		}
 
-		Long parseChargePointAmount = Long.valueOf(chargePointAmount);
+		BigDecimal parseChargePointAmount = new BigDecimal(chargePointAmount);
 
 		userPointService.chargePoint(userNo, parseChargePointAmount);
 
-		return new ResponseEntity<>(getSussceResultMsg(), HttpStatus.CREATED);
+		return new ResponseEntity<>(getSuccessResultMsg(), HttpStatus.CREATED);
 	}
 
 	/**
 	 * 사용자 포인트 사용
-	 * 
-	 * @param userNo
-	 * @param map    usePointAmount : 포인트 사용 금액
-	 * @return
-	 * @throws Exception
 	 */
 	@PostMapping("/{userNo}/usePoint")
 	public ResponseEntity<ResultMsg> usePoint(@PathVariable Long userNo, @Valid @RequestBody HashMap<String, String> map) throws Exception {
@@ -127,55 +106,43 @@ public class UserPointController {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "사용 포인트를 입력해 주세요");
 		}
 
-		Long paseLongUserPointAmount = Long.valueOf(usePointAmount);
+		BigDecimal paseLongUserPointAmount = new BigDecimal(usePointAmount);
 
 		userPointService.usePoint(userNo, paseLongUserPointAmount);
 
-		return new ResponseEntity<>(getSussceResultMsg(), HttpStatus.CREATED);
+		return new ResponseEntity<>(getSuccessResultMsg(), HttpStatus.CREATED);
 	}
 
 	/**
 	 * 사용자 포인트 내역 취소
-	 * 
-	 * @param userNo
-	 * @param userPoint
-	 * @return
-	 * @throws Exception
 	 */
 	@PostMapping("/{userNo}/usePointCancel")
-	public ResponseEntity<ResultMsg> usePointCancel(@PathVariable Long userNo, @Valid @RequestBody UserPoint userPoint) throws Exception {
+	public ResponseEntity<ResultMsg> usePointCancel(@PathVariable Long userNo, @Valid @RequestBody UserPoint userPoint) {
 
 		log.info("사용자 포인트 사용 취소 : USER_NO[{}], userPoint[{}]", userNo, userPoint);
 
 		userPointService.usePointCancel(userPoint);
 
-		return new ResponseEntity<>(getSussceResultMsg(), HttpStatus.CREATED);
+		return new ResponseEntity<>(getSuccessResultMsg(), HttpStatus.CREATED);
 	}
 
 	/**
 	 * 사용자 포인트 만료 처리
-	 * 
-	 * @param userNo
-	 * @return
-	 * @throws Exception
 	 */
 	@PostMapping("/{userNo}/pointExpired")
-	public ResponseEntity<ResultMsg> pointExpired(@PathVariable Long userNo) throws Exception {
+	public ResponseEntity<ResultMsg> pointExpired(@PathVariable Long userNo) {
 
-		log.info("사용자 포인트 만료 처리 : USER_NO[{}], userPoint[{}]", userNo);
+		log.info("사용자 포인트 만료 처리 : USER_NO[{}]", userNo);
 
 		userPointService.userPointExpired(userNo);
 
-		return new ResponseEntity<>(getSussceResultMsg(), HttpStatus.CREATED);
+		return new ResponseEntity<>(getSuccessResultMsg(), HttpStatus.CREATED);
 	}
 
 	/**
 	 * 성공 메시지 생성
-	 * 
-	 * @return
 	 */
-	private ResultMsg getSussceResultMsg() {
-		ResultMsg resultMsg = new ResultMsg("0", "성공", LocalDateTime.now());
-		return resultMsg;
+	private ResultMsg getSuccessResultMsg() {
+		return new ResultMsg("0", "성공", LocalDateTime.now());
 	}
 }

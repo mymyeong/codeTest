@@ -16,7 +16,7 @@ public class CodeTestApplication {
 	}
 
 	@Bean
-	public LocaleResolver localeResolber() {
+	public LocaleResolver localeResolver() {
 		SessionLocaleResolver lr = new SessionLocaleResolver();
 		lr.setDefaultLocale(Locale.KOREA);
 		return lr;

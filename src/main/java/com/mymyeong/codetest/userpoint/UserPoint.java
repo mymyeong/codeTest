@@ -1,23 +1,14 @@
 package com.mymyeong.codetest.userpoint;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.validation.constraints.NotNull;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 /**
  * 
@@ -28,14 +19,11 @@ import lombok.ToString;
  */
 @Entity
 @NoArgsConstructor
-@Data
 @AllArgsConstructor
-@ToString
 public class UserPoint {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "USER_POINT_SEQ_GENERATOR")
-	private Long no;
+	private String no;
 
 	/** 사용자 NO */
 	@NotNull
@@ -48,11 +36,68 @@ public class UserPoint {
 	@Enumerated(EnumType.STRING)
 	private PointStatus pointStatus;
 
-	private Long pointAmount;
+	private BigDecimal pointAmount;
 
 	/** 사용자 포인트 내역 */
 	@OneToMany(mappedBy = "userPoint")
 	@JsonIgnore
 	private List<UserPointDetail> userPointsDetail;
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "(" +
+				"no = " + no + ", " +
+				"userNo = " + userNo + ", " +
+				"processDate = " + processDate + ", " +
+				"pointStatus = " + pointStatus + ", " +
+				"pointAmount = " + pointAmount + ")";
+	}
+
+	public String getNo() {
+		return no;
+	}
+
+	public Long getUserNo() {
+		return userNo;
+	}
+
+	public LocalDateTime getProcessDate() {
+		return processDate;
+	}
+
+	public PointStatus getPointStatus() {
+		return pointStatus;
+	}
+
+	public BigDecimal getPointAmount() {
+		return pointAmount;
+	}
+
+	public List<UserPointDetail> getUserPointsDetail() {
+		return userPointsDetail;
+	}
+
+	public void setNo(String no) {
+		this.no = no;
+	}
+
+	public void setUserNo(Long userNo) {
+		this.userNo = userNo;
+	}
+
+	public void setProcessDate(LocalDateTime processDate) {
+		this.processDate = processDate;
+	}
+
+	public void setPointStatus(PointStatus pointStatus) {
+		this.pointStatus = pointStatus;
+	}
+
+	public void setPointAmount(BigDecimal pointAmount) {
+		this.pointAmount = pointAmount;
+	}
+
+	public void setUserPointsDetail(List<UserPointDetail> userPointsDetail) {
+		this.userPointsDetail = userPointsDetail;
+	}
 }

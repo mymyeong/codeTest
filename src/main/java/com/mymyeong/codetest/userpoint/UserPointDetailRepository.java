@@ -14,12 +14,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserPointDetailRepository extends JpaRepository<UserPointDetail, Long> {
 
-	/**
-	 * 현재 NO SEQ 조회
-	 */
-	@Query(value = "SELECT USER_POINT_DETAIL_SEQ_GENERATOR.nextval", nativeQuery = true)
-	Long getUserPointDetailSeq();
-
 	@Modifying
 	@Transactional
 	@Query(nativeQuery = true, //
@@ -31,10 +25,6 @@ public interface UserPointDetailRepository extends JpaRepository<UserPointDetail
 
 	/**
 	 * 사용자의 가용 포인트 상세 내역 조회
-	 * 
-	 * @param userNo
-	 * @param dateTime
-	 * @return
 	 */
 	@Query(value = "SELECT d.pointDetailNo as pointDetailNo, sum(d.pointAmount) as pointAmount, min(d.processDate) as processDate " //
 			+ "FROM UserPointDetail d " //
@@ -47,9 +37,6 @@ public interface UserPointDetailRepository extends JpaRepository<UserPointDetail
 
 	/**
 	 * 사용자 포인트 NO 의 상세 내역 조회
-	 * 
-	 * @param userPointNo
-	 * @return
 	 */
 	@Query(value = "SELECT d FROM UserPointDetail d where d.userPoint.no = :userPointNo")
 	List<UserPointDetail> getUserPointNoList(@Param(value = "userPointNo") Long userPointNo);

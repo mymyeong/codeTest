@@ -1,12 +1,13 @@
 package com.mymyeong.codetest.userpoint;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.mymyeong.codetest.util.UuidGenerator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,30 +19,28 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class UserPointService {
 
-	@Autowired
-	UserPointRepository userPointRepository;
+	final UserPointRepository userPointRepository;
 
-	@Autowired
-	UserPointDetailRepository userPointDetailRepository;
+	final UserPointDetailRepository userPointDetailRepository;
+
+	public UserPointService(UserPointRepository userPointRepository, UserPointDetailRepository userPointDetailRepository) {
+		this.userPointRepository = userPointRepository;
+		this.userPointDetailRepository = userPointDetailRepository;
+	}
 
 	/**
 	 * 사용자 포인트 조회
-	 * 
-	 * @param userNo
-	 * @return
 	 */
-	public Long getUserPoint(Long userNo) {
+	@Transactional(readOnly = true)
+	public BigDecimal getUserPoint(Long userNo) {
 		// 포인트 조회
 		return userPointRepository.getUserPoint(userNo);
 	}
 
 	/**
 	 * 사용자 포인트 내역 조회
-	 * 
-	 * @param userNo
-	 * @param pageable
-	 * @return
 	 */
+	@Transactional(readOnly = true)
 	public List<UserPoint> getUserPointList(Long userNo, Pageable pageable) {
 		Page<UserPoint> userPointList = userPointRepository.findAllByUserNoOrderByProcessDate(userNo, pageable);
 
@@ -52,27 +51,22 @@ public class UserPointService {
 		return userPointList.toList();
 	}
 
-	public List<UserPointDetailUseInterface> getUseablePointList(Long userNo, Pageable pageable) {
-		List<UserPointDetailUseInterface> userPointList = userPointDetailRepository.getUserUseablePointList(userNo, LocalDateTime.now().minus(Period.ofDays(370)));
+	public List<UserPointDetailUseInterface> getUsablePointList(Long userNo, Pageable pageable) {
 
-		return userPointList;
+		return userPointDetailRepository.getUserUseablePointList(userNo, LocalDateTime.now().minus(Period.ofDays(370)));
 	}
 
 	/**
 	 * 포인트 충전
-	 * 
-	 * @param userNo
-	 * @param parseChargePointAmount
-	 * @throws Exception
 	 */
-	@Transactional
-	public void chargePoint(Long userNo, Long parseChargePointAmount) throws Exception {
+	@Transactional(readOnly = false)
+	public void chargePoint(Long userNo, BigDecimal parseChargePointAmount) throws Exception {
 
 		UserPoint userPoint = getUserPoint(userNo, parseChargePointAmount);
 		UserPoint saveUserPoint = userPointRepository.save(userPoint);
 		log.info("save UserPoint : {}", saveUserPoint);
-		Long userPointDetailSeq = userPointDetailRepository.getUserPointDetailSeq();
-		UserPointDetail userPointDetail = getUserPointDetail(userNo, userPointDetailSeq, parseChargePointAmount, saveUserPoint);
+		String userPointDetailId = UuidGenerator.getUuid();
+		UserPointDetail userPointDetail = getUserPointDetail(userNo, userPointDetailId, parseChargePointAmount, saveUserPoint);
 		log.info("save userPointDetail : {}", userPointDetail);
 		Integer saveUserPointDetail = userPointDetailRepository.saveUserPointDetail(userPointDetail);
 
@@ -83,41 +77,34 @@ public class UserPointService {
 
 	/**
 	 * 포인트 사용
-	 * 
-	 * @param userNo
-	 * @param paseLongUserPointAmount
-	 * @throws Exception
 	 */
-	public void usePoint(Long userNo, Long paseLongUserPointAmount) throws Exception {
+	@Transactional(readOnly = false)
+	public void usePoint(Long userNo, BigDecimal userPointAmount) throws Exception {
 		LocalDateTime nowDateTime = LocalDateTime.now();
 
 		// 포인트 한도 확인
-		Long userPoint = userPointRepository.getUserPoint(userNo);
-		if (userPoint < paseLongUserPointAmount) {
-			log.error("포인트 한도 초과 : 사용자 가용 포인트 {}, 사용요청 포인트 {}", userPoint, paseLongUserPointAmount);
+		BigDecimal userPoint = userPointRepository.getUserPoint(userNo);
+		if (userPointAmount.compareTo(userPoint) > 0) {
+			log.error("포인트 한도 초과 : 사용자 가용 포인트 {}, 사용요청 포인트 {}", userPoint, userPointAmount);
 			throw new Exception("포인트 한도 초과");
 		}
 
 		// 사용자 사용가능 포인트 상세 내역 조회
-		List<UserPointDetailUseInterface> userUseablePointList = userPointDetailRepository.getUserUseablePointList(userNo, nowDateTime.minus(Period.ofDays(370)));
+		List<UserPointDetailUseInterface> userUsablePointList = userPointDetailRepository.getUserUseablePointList(userNo, nowDateTime.minus(Period.ofDays(370)));
 
 		// 사용자 상세 포인트 내역 계산
-		ArrayList<UserPointDetailUseInterface> useList = getUserPointUseInterface(paseLongUserPointAmount, userUseablePointList, nowDateTime);
+		ArrayList<UserPointDetailUseInterface> useList = getUserPointUseInterface(userPointAmount, userUsablePointList, nowDateTime);
 
 		log.info("포인트 차감 내역");
-		useList.stream().forEach(v -> log.info("PointDetailNo : {}, PointAmount : {}, ProcessDate : {}", v.getPointDetailNo(), v.getPointAmount(), v.getProcessDate()));
+		useList.forEach(v -> log.info("PointDetailNo : {}, PointAmount : {}, ProcessDate : {}", v.getPointDetailId(), v.getPointAmount(), v.getProcessDate()));
 
-		saveUserPoint(userNo, paseLongUserPointAmount, nowDateTime, useList);
+		saveUserPoint(userNo, userPointAmount, nowDateTime, useList);
 	}
 
 	/**
 	 * 사용자 포인트 객채 생성
-	 * 
-	 * @param userNo
-	 * @param parseChargePointAmount
-	 * @return
 	 */
-	private UserPoint getUserPoint(Long userNo, Long parseChargePointAmount) {
+	private UserPoint getUserPoint(Long userNo, BigDecimal parseChargePointAmount) {
 		UserPoint userPoint = new UserPoint();
 
 		userPoint.setPointAmount(parseChargePointAmount);
@@ -130,18 +117,12 @@ public class UserPointService {
 
 	/**
 	 * 사용자 상세 포인트 내역 객체 생성
-	 * 
-	 * @param userNo
-	 * @param userPointDetailSeq
-	 * @param parseChargePointAmount
-	 * @param saveUserPoint
-	 * @return
 	 */
-	private UserPointDetail getUserPointDetail(Long userNo, Long userPointDetailSeq, Long parseChargePointAmount, UserPoint saveUserPoint) {
+	private UserPointDetail getUserPointDetail(Long userNo, String userPointDetailId, BigDecimal parseChargePointAmount, UserPoint saveUserPoint) {
 		UserPointDetail userPointDetail = new UserPointDetail();
 
-		userPointDetail.setNo(userPointDetailSeq);
-		userPointDetail.setPointDetailNo(userPointDetailSeq);
+		userPointDetail.setNo(userPointDetailId);
+		userPointDetail.setPointDetailNo(userPointDetailId);
 		userPointDetail.setPointAmount(parseChargePointAmount);
 		userPointDetail.setPointStatus(PointStatus.CHARGE);
 		userPointDetail.setProcessDate(LocalDateTime.now().withNano(0));
@@ -153,29 +134,24 @@ public class UserPointService {
 
 	/**
 	 * 사용자 상세 포인트 내역 계산
-	 * 
-	 * @param paseLongUserPointAmount
-	 * @param userUseablePointList
-	 * @param nowDateTime
-	 * @return
 	 */
-	private ArrayList<UserPointDetailUseInterface> getUserPointUseInterface(Long paseLongUserPointAmount, List<UserPointDetailUseInterface> userUseablePointList, LocalDateTime nowDateTime) {
-		ArrayList<UserPointDetailUseInterface> useList = new ArrayList<UserPointDetailUseInterface>();
-		Long usePoint = paseLongUserPointAmount;
+	private ArrayList<UserPointDetailUseInterface> getUserPointUseInterface(BigDecimal userPointAmount, List<UserPointDetailUseInterface> userUsablePointList, LocalDateTime nowDateTime) {
+		ArrayList<UserPointDetailUseInterface> useList = new ArrayList<>();
+		BigDecimal usePoint = userPointAmount;
 
-		for (UserPointDetailUseInterface userUseablePoint : userUseablePointList) {
+		for (UserPointDetailUseInterface userUsablePoint : userUsablePointList) {
 
-			UserPointDetailUseInterface temp = getUserPointDetailUseInterfaceData(userUseablePoint);
+			UserPointDetailUseInterface temp = getUserPointDetailUseInterfaceData(userUsablePoint);
 
 			// 사용 포인트가 상세 내역의 포인트보다 클때 -> 상세 내역의 모든 포인트 소진
-			if (usePoint > userUseablePoint.getPointAmount()) {
+			if (usePoint.compareTo(userUsablePoint.getPointAmount()) > 0) {
 				temp.setProcessDate(nowDateTime);
-				temp.setPointAmount(-userUseablePoint.getPointAmount());
+				temp.setPointAmount(userUsablePoint.getPointAmount().negate());
 				useList.add(temp);
-				usePoint -= userUseablePoint.getPointAmount();
+				usePoint = usePoint.subtract(userUsablePoint.getPointAmount());
 			} else {
 				// 사용 포인트가 상세 내역의 포인트 보다 작거나 같을때 -> 사용 포인트 금액으로 상세 내역 포인트 저장
-				temp.setPointAmount(-usePoint);
+				temp.setPointAmount(usePoint.negate());
 				temp.setProcessDate(nowDateTime);
 				useList.add(temp);
 				break;
@@ -187,18 +163,11 @@ public class UserPointService {
 
 	/**
 	 * 사용자 포인트 사용 내역 저장
-	 * 
-	 * @param userNo
-	 * @param paseLongUserPointAmount
-	 * @param nowDateTime
-	 * @param useList
-	 * @throws Exception
 	 */
-	@Transactional
-	protected void saveUserPoint(Long userNo, Long paseLongUserPointAmount, LocalDateTime nowDateTime, ArrayList<UserPointDetailUseInterface> useList) throws Exception {
+	@Transactional(readOnly = false)
+	protected void saveUserPoint(Long userNo, BigDecimal userPointAmount, LocalDateTime nowDateTime, ArrayList<UserPointDetailUseInterface> useList) throws Exception {
 		try {
-			UserPoint useUserPoint = userPointRepository.save(getUserUsePoint(userNo, -paseLongUserPointAmount, nowDateTime.withNano(0)));
-			log.debug("useUserPoint : {}" + useUserPoint);
+			UserPoint useUserPoint = userPointRepository.save(getUserUsePoint(userNo, userPointAmount.negate(), nowDateTime.withNano(0)));
 
 			List<UserPointDetail> userPointDetailList = getUserPointDetailList(userNo, useUserPoint, useList);
 			userPointDetailList = userPointDetailRepository.saveAll(userPointDetailList);
@@ -214,18 +183,13 @@ public class UserPointService {
 
 	/**
 	 * 사용자 포인트 상세 사용내역 생성
-	 * 
-	 * @param userNo
-	 * @param useUserPoint
-	 * @param useList
-	 * @return
 	 */
 	protected List<UserPointDetail> getUserPointDetailList(Long userNo, UserPoint useUserPoint, ArrayList<UserPointDetailUseInterface> useList) {
 
-		List<UserPointDetail> userPointDetailList = new ArrayList<UserPointDetail>();
+		List<UserPointDetail> userPointDetailList;
 
 		userPointDetailList = useList.stream()//
-				.map(v -> new UserPointDetail(null, userNo, v.getPointDetailNo(), v.getProcessDate(), PointStatus.USE, v.getPointAmount(), useUserPoint))//
+				.map(v -> new UserPointDetail(null, userNo, v.getPointDetailId(), v.getProcessDate(), PointStatus.USE, v.getPointAmount(), useUserPoint))//
 				.collect(Collectors.toList());
 
 		return userPointDetailList;
@@ -233,17 +197,12 @@ public class UserPointService {
 
 	/**
 	 * 사용자 포인트 사용정보 생성
-	 * 
-	 * @param userNo
-	 * @param paseLongUserPointAmount
-	 * @param processDate
-	 * @return
 	 */
-	protected UserPoint getUserUsePoint(Long userNo, Long paseLongUserPointAmount, LocalDateTime processDate) {
+	protected UserPoint getUserUsePoint(Long userNo, BigDecimal userPointAmount, LocalDateTime processDate) {
 		UserPoint userPoint = new UserPoint();
 
 		userPoint.setUserNo(userNo);
-		userPoint.setPointAmount(paseLongUserPointAmount);
+		userPoint.setPointAmount(userPointAmount);
 		userPoint.setProcessDate(processDate);
 		userPoint.setPointStatus(PointStatus.USE);
 
@@ -252,34 +211,31 @@ public class UserPointService {
 
 	/**
 	 * 계산 및 업데이트용 사용자 포인트 사용 객채 생성
-	 * 
-	 * @param userUseablePoint
-	 * @return
 	 */
-	protected UserPointDetailUseInterface getUserPointDetailUseInterfaceData(UserPointDetailUseInterface userUseablePoint) {
+	protected UserPointDetailUseInterface getUserPointDetailUseInterfaceData(UserPointDetailUseInterface userUsablePoint) {
 		UserPointDetailUseInterface temp = new UserPointDetailUseInterface() {
 
-			private Long pointDetailNo;
-			private Long pointAmount;
+			private String pointDetailId;
+			private BigDecimal pointAmount;
 			private LocalDateTime processDate;
 
 			@Override
-			public Long getPointDetailNo() {
-				return pointDetailNo;
+			public String getPointDetailId() {
+				return pointDetailId;
 			}
 
 			@Override
-			public void setPointDetailNo(Long pointDetailNo) {
-				this.pointDetailNo = pointDetailNo;
+			public void setPointDetailId(String pointDetailId) {
+				this.pointDetailId = pointDetailId;
 			}
 
 			@Override
-			public Long getPointAmount() {
+			public BigDecimal getPointAmount() {
 				return pointAmount;
 			}
 
 			@Override
-			public void setPointAmount(Long pointAmount) {
+			public void setPointAmount(BigDecimal pointAmount) {
 				this.pointAmount = pointAmount;
 			}
 
@@ -295,18 +251,17 @@ public class UserPointService {
 
 		};
 
-		temp.setPointDetailNo(userUseablePoint.getPointDetailNo());
-		temp.setPointAmount(userUseablePoint.getPointAmount());
-		temp.setProcessDate(userUseablePoint.getProcessDate());
+		temp.setPointDetailId(userUsablePoint.getPointDetailId());
+		temp.setPointAmount(userUsablePoint.getPointAmount());
+		temp.setProcessDate(userUsablePoint.getProcessDate());
 
 		return temp;
 	}
 
 	/**
 	 * 사용자 사용 포인트 내역 취소
-	 * 
-	 * @param userPoint
 	 */
+	@Transactional(readOnly = false)
 	public void usePointCancel(UserPoint userPoint) {
 
 		// userPoint select
@@ -321,15 +276,14 @@ public class UserPointService {
 
 	/**
 	 * 사용자 포인트 만료
-	 * 
-	 * @param userNo
 	 */
+	@Transactional(readOnly = false)
 	public void userPointExpired(Long userNo) {
 		LocalDateTime expiredDate = LocalDateTime.now().minusDays(365);
 
 		List<UserPoint> findAllExpiredUserPoint = userPointRepository.findExpiredUserPointList(userNo, expiredDate);
 
-		log.info("사용자NO {} : 포인트 만료 처리", userNo);
+		log.info("사용자 NO {} : 포인트 만료 처리", userNo);
 		findAllExpiredUserPoint.forEach(v -> {
 			if (v != null) {
 				log.info(v.toString());
@@ -337,10 +291,10 @@ public class UserPointService {
 		});
 
 		findAllExpiredUserPoint.forEach(v -> {
-			UserPoint expiredUserPoint = new UserPoint(0L, v.getUserNo(), LocalDateTime.now().withNano(0), PointStatus.EXPIRED, -v.getPointAmount(), new ArrayList<>());
+			UserPoint expiredUserPoint = new UserPoint(UuidGenerator.getUuid(), v.getUserNo(), LocalDateTime.now().withNano(0), PointStatus.EXPIRED, v.getPointAmount().negate(), new ArrayList<>());
 			userPointRepository.save(expiredUserPoint);
-			Long userPointDetailSeq = userPointDetailRepository.getUserPointDetailSeq();
-			UserPointDetail userPointDetail = getUserPointDetail(v.getUserNo(), userPointDetailSeq, -v.getPointAmount(), v);
+			String userPointDetailId = UuidGenerator.getUuid();
+			UserPointDetail userPointDetail = getUserPointDetail(v.getUserNo(), userPointDetailId, v.getPointAmount().negate(), v);
 			userPointDetail.setPointStatus(PointStatus.EXPIRED);
 			userPointDetailRepository.save(userPointDetail);
 		});

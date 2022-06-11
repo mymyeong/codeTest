@@ -1,18 +1,19 @@
 package com.mymyeong.codetest.userpoint;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public interface UserPointDetailUseInterface {
 
-	public Long getPointDetailNo();
+	String getPointDetailId();
 
-	public void setPointDetailNo(Long pointDetailNo);
+	void setPointDetailId(String pointDetailId);
 
-	public Long getPointAmount();
+	BigDecimal getPointAmount();
 
-	public void setPointAmount(Long pointAmount);
+	void setPointAmount(BigDecimal pointAmount);
 
-	public LocalDateTime getProcessDate();
+	LocalDateTime getProcessDate();
 
-	public void setProcessDate(LocalDateTime processDate);
+	void setProcessDate(LocalDateTime processDate);
 }

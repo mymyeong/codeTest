@@ -53,7 +53,7 @@ public class UserPointService {
 
 	public List<UserPointDetailUseInterface> getUsablePointList(Long userNo, Pageable pageable) {
 
-		return userPointDetailRepository.getUserUseablePointList(userNo, LocalDateTime.now().minus(Period.ofDays(370)));
+		return userPointDetailRepository.getUserUsablePointList(userNo, LocalDateTime.now().minus(Period.ofDays(370)));
 	}
 
 	/**
@@ -62,16 +62,18 @@ public class UserPointService {
 	@Transactional(readOnly = false)
 	public void chargePoint(Long userNo, BigDecimal parseChargePointAmount) throws Exception {
 
+		// save user Point
 		UserPoint userPoint = getUserPoint(userNo, parseChargePointAmount);
 		UserPoint saveUserPoint = userPointRepository.save(userPoint);
 		log.info("save UserPoint : {}", saveUserPoint);
-		String userPointDetailId = UuidGenerator.getUuid();
-		UserPointDetail userPointDetail = getUserPointDetail(userNo, userPointDetailId, parseChargePointAmount, saveUserPoint);
-		log.info("save userPointDetail : {}", userPointDetail);
-		Integer saveUserPointDetail = userPointDetailRepository.saveUserPointDetail(userPointDetail);
 
-		if (saveUserPointDetail == null || saveUserPointDetail != 1) {
-			throw new Exception();
+		// save user point detail
+		String userPointDetailId = UuidGenerator.getUuid();
+		var userPointDetail = getUserPointDetail(userNo, userPointDetailId, parseChargePointAmount, saveUserPoint);
+		log.info("save userPointDetail : {}", userPointDetail);
+		UserPointDetail afterUserPoint = userPointDetailRepository.save(userPointDetail);
+		if (afterUserPoint == null) {
+			throw new Exception("사용자 포인트 출전 실패");
 		}
 	}
 
@@ -90,7 +92,7 @@ public class UserPointService {
 		}
 
 		// 사용자 사용가능 포인트 상세 내역 조회
-		List<UserPointDetailUseInterface> userUsablePointList = userPointDetailRepository.getUserUseablePointList(userNo, nowDateTime.minus(Period.ofDays(370)));
+		List<UserPointDetailUseInterface> userUsablePointList = userPointDetailRepository.getUserUsablePointList(userNo, nowDateTime.minus(Period.ofDays(370)));
 
 		// 사용자 상세 포인트 내역 계산
 		ArrayList<UserPointDetailUseInterface> useList = getUserPointUseInterface(userPointAmount, userUsablePointList, nowDateTime);

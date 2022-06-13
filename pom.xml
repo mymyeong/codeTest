@@ -12,7 +12,7 @@
 	<artifactId>codeTest</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>codeTest</name>
-	<description>misinsa code test project</description>
+	<description>point system test project</description>
 	<properties>
 		<java.version>11</java.version>
 	</properties>

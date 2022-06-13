@@ -34,7 +34,6 @@ import lombok.ToString;
 public class UserPointDetail {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "USER_POINT_DETAIL_SEQ_GENERATOR")
 	@JsonIgnore
 	private String no;
 
